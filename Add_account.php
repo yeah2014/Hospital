@@ -5,6 +5,7 @@
  * flag=1时，帐号密码姓名电话不能为空；
  * flag=2时，数据库出错；
  * flag=3时，成功注册；
+ * flag=4时，帐号已存在；
  */
 if(!isset($_GET['account'])||!isset($_GET['password'])||!isset($_GET['name'])||!isset($_GET['phone'])){
 	$flag = 1;
@@ -18,20 +19,30 @@ if(!isset($_GET['account'])||!isset($_GET['password'])||!isset($_GET['name'])||!
 	$phone = $_GET['phone'];
 	require_once 'function.php';
 	connectDb();
-	mysql_query("INSERT INTO aco_info (account,password) VALUE ('$account','$password')");
-	$account_id = mysql_insert_id();
-	$believable=3;
-	$believable = intval($believable);
-	mysql_query("INSERT INTO per_info (Account_Id,name,phone,believable) VALUE
+	$result = mysql_query("SELECT account FROM aco_info WHERE account='$account'");
+	if(!mysql_num_rows($result)){
+		mysql_query("INSERT INTO aco_info (account,password) VALUE ('$account','$password')");
+		$account_id = mysql_insert_id();
+		$believable=3;
+		$believable = intval($believable);
+		mysql_query("INSERT INTO per_info (Account_Id,name,phone,believable) VALUE
 				($account_id,'$name','$phone',$believable)");
-	if(mysql_errno()){
-		$flag = 2;
+		if(mysql_errno()){
+			$flag = 2;
+			$arr[0] = array("flag" => $flag);
+			echo json_encode($arr);
+		}
+		$flag = 3;
+		$arr[0] = array("flag" => $flag);
+		echo json_encode($arr);
+	}else {
+		$flag = 4;
 		$arr[0] = array("flag" => $flag);
 		echo json_encode($arr);
 	}
-	$flag = 3;
-	$arr[0] = array("flag" => $flag);
-	echo json_encode($arr);
+
+
+
 }
 
 
